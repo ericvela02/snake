@@ -2,18 +2,25 @@ import pygame
 from snake import *
 from food import Food
 
-HEIGHT = 600
-WIDTH = 600
+HEIGHT = 800
+WIDTH = 800
+
+BLOCK_SIZE = 40
 
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Snake")
-block_size = 20
-snake = Snake((WIDTH, HEIGHT), block_size)
+
+snake = Snake((WIDTH, HEIGHT), BLOCK_SIZE)
+food = Food((WIDTH, HEIGHT), BLOCK_SIZE)
+
 clock = pygame.time.Clock()
 running = True
-food = Food((WIDTH, HEIGHT), block_size)
-font = pygame.font.SysFont('comicsans', 60, True)
+
+logo = pygame.image.load('./assets/images/snake-logo.png')
+logo_rect = logo.get_rect()
+logo_width, logo_height = logo_rect.width, logo_rect.height
+background = pygame.image.load('./assets/images/snake-bg.png')
 
 while running:
     for event in pygame.event.get():
@@ -29,20 +36,16 @@ while running:
                 snake.steer(Direction.UP)
             if event.key == pygame.K_DOWN:
                 snake.steer(Direction.DOWN)
-
+    
+    window.blit(background, (0, 0))
     
     snake.move()
     snake.check_for_food(food)
     if snake.check_bounds() == True or snake.check_tail_collision() == True:
-        text = font.render('Game Over', True, (0, 0, 0))
-        screen.blit(text, (20, 120))
-        pygame.display.update()
-        pygame.time.delay(1000)
         snake.respawn()
-        food.respawn() 
-    screen.fill("white")
-    snake.draw(pygame, screen)
-    food.draw(pygame, screen)
+        food.respawn()
+    snake.draw(pygame, window)
+    food.draw(pygame, window)
 
     pygame.display.flip()
     clock.tick(5)
