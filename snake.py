@@ -1,4 +1,5 @@
 from enum import Enum
+from collections import deque
 
 class Direction(Enum):
     UP = 0
@@ -25,6 +26,9 @@ class Snake:
         self.map_dim = map_dim
         self.grid_width = self.map_dim[0] // self.body_dim
         self.grid_height = self.map_dim[1] // self.body_dim
+
+        self.direction_queue = deque(maxlen=2)
+
         self.respawn()
 
     def respawn(self):
@@ -42,6 +46,8 @@ class Snake:
                 game.draw.rect(window, "black", (segment[0] + 5, segment[1] + 10, 2, 2))
 
     def move(self):
+        if self.direction_queue:
+            self.direction = self.direction_queue.popleft()
         curr_head = self.body[-1]
         if self.direction == Direction.DOWN:
             next_head = (curr_head[0], curr_head[1] + self.body_dim)
@@ -60,21 +66,54 @@ class Snake:
             self.body.pop(0)
 
     def steer(self, new_dir):
-        if self.direction == Direction.DOWN and new_dir != Direction.UP:
-            self.direction = new_dir
-        if self.direction == Direction.UP and new_dir != Direction.DOWN:
-            self.direction = new_dir
-        if self.direction == Direction.LEFT and new_dir != Direction.RIGHT:
-            self.direction = new_dir
-        if self.direction == Direction.RIGHT and new_dir != Direction.LEFT:
-            self.direction = new_dir
+        last_dir = self.direction_queue[-1] if self.direction_queue else self.direction
+        if len(self.direction_queue) < 3:  # only enqueue new direction if there is room
+            if last_dir == Direction.DOWN and new_dir != Direction.UP:
+                self.direction_queue.append(new_dir)
+            elif last_dir == Direction.UP and new_dir != Direction.DOWN:
+                self.direction_queue.append(new_dir)
+            elif last_dir == Direction.LEFT and new_dir != Direction.RIGHT:
+                self.direction_queue.append(new_dir)
+            elif last_dir == Direction.RIGHT and new_dir != Direction.LEFT:
+                self.direction_queue.append(new_dir)
+    
+    def eat(self):
+        self.length += 1
+
+    def check_for_food(self, food):
+        head = self.body[-1]
+        if head[0] == food.x and head[1] == food.y:
+            self.eat()
+            food.respawn()
+
+    def check_tail_collision(self):
+        head = self.body[-1]
+        has_eaten_tail = False
+
+        for i in range(len(self.body) - 1):
+            segment = self.body[i]
+            if head[0] == segment[0] and head[1] == segment[1]:
+                has_eaten_tail = True
+
+        return has_eaten_tail
+    
+    def check_bounds(self):
+        head = self.body[-1]
+        if head[0] >= self.map_dim[0]:
+            return True
+        if head[1] >= self.map_dim[1]:
+            return True
+        
+        if head[0] < 0:
+            return True
+        if head[1] < 0:
+            return True
+        
+        return False
+
 
     def grid_position(self, x_grid, y_grid):
         x = x_grid * self.body_dim
         y = y_grid * self.body_dim
 
         return x, y
-    
-    def check_collision(x_1, y_1, w_1, h_1, x_2, y_2, w_2, h_2):
-
-        return x_1 < x_1 + w_2 and x_1 + w_1 > x_2 and y_1 < y_2 + h_2 and h_1 + y_1 > y_2

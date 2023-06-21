@@ -13,6 +13,7 @@ snake = Snake((WIDTH, HEIGHT), block_size)
 clock = pygame.time.Clock()
 running = True
 food = Food((WIDTH, HEIGHT), block_size)
+font = pygame.font.SysFont('comicsans', 60, True)
 
 while running:
     for event in pygame.event.get():
@@ -31,6 +32,14 @@ while running:
 
     
     snake.move()
+    snake.check_for_food(food)
+    if snake.check_bounds() == True or snake.check_tail_collision() == True:
+        text = font.render('Game Over', True, (0, 0, 0))
+        screen.blit(text, (20, 120))
+        pygame.display.update()
+        pygame.time.delay(1000)
+        snake.respawn()
+        food.respawn() 
     screen.fill("white")
     snake.draw(pygame, screen)
     food.draw(pygame, screen)
